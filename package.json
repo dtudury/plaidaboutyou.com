@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "start": "node server.js 1715"
+  },
+  "devDependencies": {
+    "express": "^4.17.1",
+    "standard": "^16.0.3"
+  }
+}
