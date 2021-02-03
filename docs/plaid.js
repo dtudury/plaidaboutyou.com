@@ -117,8 +117,8 @@ const program = createProgram(
         fragColor = vec4(colors[weft[int(mod(threadY, weftLength))]], 1.0);
       }
       gl_Position = vec4(
-        2.0 * vertPosition.x / resolution.x - 1.0 + sin(time + x / 100.0) * 0.01,
-        -2.0 * vertPosition.y / resolution.y + 1.0 + sin(time + y / 100.0) * 0.01,
+        2.0 * vertPosition.x / resolution.x - 1.0, // + sin(time + x / 100.0) * 0.01,
+        -2.0 * vertPosition.y / resolution.y + 1.0, // + sin(time + y / 100.0) * 0.01,
         0.0,
         1.0
       );
