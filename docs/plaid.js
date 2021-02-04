@@ -105,20 +105,33 @@ const program = createProgram(
     uniform float drawdownHeight;
     attribute vec4 vertPosition;
     varying vec4 fragColor;
+    bool isWarp (float x, float y) {
+      int a = drawdown[int(mod(y, drawdownHeight) * drawdownWidth + mod(x, drawdownWidth))];
+      return a == 0;
+    }
     void main() {
-      float x = vertPosition.x - resolution.x * 0.5;
-      float y = vertPosition.y - resolution.y * 0.5;
-      float threadX = vertPosition.z;
-      float threadY = vertPosition.w;
-      int a = drawdown[int(mod(threadY, drawdownHeight) * drawdownWidth + mod(threadX, drawdownWidth))];
-      if (a == 0) {
-        fragColor = vec4(colors[warp[int(mod(threadX, warpLength))]], 1.0);
+      float x = vertPosition.x;
+      float y = vertPosition.y;
+      float ox = vertPosition.z;
+      float oy = vertPosition.w;
+      float texture = 0.3;
+      if (isWarp(x, y)) {
+        if (ox == 1.0) {
+          fragColor = vec4((1.0 - texture) * colors[warp[int(mod(x, warpLength))]], 1.0);
+        } else {
+          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[warp[int(mod(x, warpLength))]], 1.0);
+        }
       } else {
-        fragColor = vec4(colors[weft[int(mod(threadY, weftLength))]], 1.0);
+        fragColor = vec4(colors[weft[int(mod(y, weftLength))]], 1.0);
+        if (oy == 1.0) {
+          fragColor = vec4((1.0 - texture) * colors[weft[int(mod(y, weftLength))]], 1.0);
+        } else {
+          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[weft[int(mod(y, weftLength))]], 1.0);
+        }
       }
       gl_Position = vec4(
-        2.0 * vertPosition.x / resolution.x - 1.0,
-        -2.0 * vertPosition.y / resolution.y + 1.0,
+        2.0 * (x + ox) * scale.x / resolution.x - 1.0,
+        -2.0 * (y + oy) * scale.y / resolution.y + 1.0,
         0.0,
         1.0
       );
@@ -163,19 +176,19 @@ function resizeCanvas () {
   for (let x = 0; x < canvas.width / xStep; ++x) {
     for (let y = 0; y < canvas.height / yStep; ++y) {
       vertices.push([
-        x * xStep, y * yStep, x, y,
-        x * xStep, (y + 1) * yStep, x, y,
-        (x + 1) * xStep, y * yStep, x, y,
-        (x + 1) * xStep, (y + 1) * yStep, x, y,
-        (x + 1) * xStep, y * yStep, x, y,
-        x * xStep, (y + 1) * yStep, x, y
+        x, y, 0, 0,
+        x, y, 0, 1,
+        x, y, 1, 0,
+        x, y, 1, 1,
+        x, y, 1, 0,
+        x, y, 0, 1
       ])
     }
   }
   vertices = vertices.flat()
   gl.viewport(0, 0, window.innerWidth, window.innerHeight)
   gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height)
-  gl.uniform2f(scaleLocation, 3, 3)
+  gl.uniform2f(scaleLocation, xStep, yStep)
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
 }
 window.addEventListener('resize', resizeCanvas, false)
