@@ -94,13 +94,13 @@ const program = createProgram(
   createShader(gl, gl.VERTEX_SHADER, `
     precision lowp float;
     uniform vec2 resolution;
-    uniform float time;
-    uniform vec3 colors[128];
-    uniform int warp[256];
+    uniform vec2 scale;
+    uniform vec3 colors[16];
+    uniform int warp[128];
     uniform float warpLength;
-    uniform int weft[256];
+    uniform int weft[128];
     uniform float weftLength;
-    uniform int drawdown[256];
+    uniform int drawdown[64];
     uniform float drawdownWidth;
     uniform float drawdownHeight;
     attribute vec4 vertPosition;
@@ -117,8 +117,8 @@ const program = createProgram(
         fragColor = vec4(colors[weft[int(mod(threadY, weftLength))]], 1.0);
       }
       gl_Position = vec4(
-        2.0 * vertPosition.x / resolution.x - 1.0, // + sin(time + x / 100.0) * 0.01,
-        -2.0 * vertPosition.y / resolution.y + 1.0, // + sin(time + y / 100.0) * 0.01,
+        2.0 * vertPosition.x / resolution.x - 1.0,
+        -2.0 * vertPosition.y / resolution.y + 1.0,
         0.0,
         1.0
       );
@@ -142,8 +142,8 @@ const positionAttribLocation = gl.getAttribLocation(program, 'vertPosition')
 gl.vertexAttribPointer(positionAttribLocation, 4, gl.FLOAT, gl.FALSE, 4 * Float32Array.BYTES_PER_ELEMENT, 0)
 gl.enableVertexAttribArray(positionAttribLocation)
 
-const timeLocation = gl.getUniformLocation(program, 'time')
 const resolutionLocation = gl.getUniformLocation(program, 'resolution')
+const scaleLocation = gl.getUniformLocation(program, 'scale')
 const drawdownLocation = gl.getUniformLocation(program, 'drawdown')
 const drawdownWidthLocation = gl.getUniformLocation(program, 'drawdownWidth')
 const drawdownHeightLocation = gl.getUniformLocation(program, 'drawdownHeight')
@@ -175,6 +175,7 @@ function resizeCanvas () {
   vertices = vertices.flat()
   gl.viewport(0, 0, window.innerWidth, window.innerHeight)
   gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height)
+  gl.uniform2f(scaleLocation, 3, 3)
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
 }
 window.addEventListener('resize', resizeCanvas, false)
@@ -206,12 +207,6 @@ watchFunction(() => {
   gl.uniform1f(drawdownWidthLocation, shafts)
   gl.uniform1f(drawdownHeightLocation, model.drawdown.length)
   document.location.hash = encodeModel(model)
-})
 
-function redraw (t) {
-  const time = (t / 1000) % 0x10000
-  gl.uniform1f(timeLocation, time)
   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 4)
-  window.requestAnimationFrame(redraw)
-}
-redraw(0)
+})
