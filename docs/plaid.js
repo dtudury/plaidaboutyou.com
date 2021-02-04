@@ -37,7 +37,7 @@ function encodeModel (model) {
   const drawdownPart = `DRAWDOWN=${shafts}:${
     model.drawdown
       .map(row => row.concat(Array(shafts - row.length).fill(0)))
-      .map(row => `0x${BigInt(`0b${row.join('')}`).toString(16)
+      .map(row => `0b${BigInt(`0b${row.join('')}`).toString(2)
   }`).join(',')}`
   return [colorPart, warpPart, weftPart, drawdownPart].join(';')
 }
