@@ -229,11 +229,7 @@ function resizeCanvas () {
   gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height)
   gl.uniform2f(scaleLocation, xStep, yStep)
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
-}
-window.addEventListener('resize', resizeCanvas, false)
 
-watchFunction(() => {
-  resizeCanvas()
   const colorValues = []
   const colorMap = {}
   const hexMapper = hex => {
@@ -263,4 +259,7 @@ watchFunction(() => {
   document.location.hash = encodeModel(model)
 
   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 4)
-})
+}
+
+window.addEventListener('resize', resizeCanvas, false)
+watchFunction(resizeCanvas)
