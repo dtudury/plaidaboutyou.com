@@ -145,7 +145,7 @@ const program = createProgram(
     attribute vec4 vertPosition;
     varying vec4 fragColor;
     bool isWarp (float x, float y) {
-      int a = tieUp[int(mod(y, tieUpHeight) * tieUpWidth + mod(x, tieUpWidth))];
+      int a = tieUp[int(0.5 + mod(y, tieUpHeight) * tieUpWidth + mod(x, tieUpWidth))];
       return a == 0;
     }
     void main() {
