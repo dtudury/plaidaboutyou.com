@@ -146,8 +146,10 @@ const program = createProgram(
     varying vec4 fragColor;
 
 
-    bool isWarp (float x, float y, float width, float height) {
-      int a = tieUp[int(mod(y, height) * width + mod(x, width))];
+    bool isWarp (float x, float y) {
+      x = floor(mod(x + 0.5, tieUpWidth));
+      y = floor(mod(y + 0.5, tieUpHeight));
+      int a = tieUp[int(0.5 + y * tieUpWidth + x)];
       return a == 0;
     }
     void main() {
@@ -158,7 +160,7 @@ const program = createProgram(
       float ox = floor(0.5 + vertPosition.z);
       float oy = floor(0.5 + vertPosition.w);
       float texture = 0.3;
-      if (isWarp(x, y, floor(0.5 + tieUpWidth), floor(0.5 + tieUpHeight))) {
+      if (isWarp(x, y)) {
         int warpIndex = int(mod(x, width));
         if (ox == 1.0) {
           fragColor = vec4((1.0 - texture) * colors[warp[warpIndex]], 1.0);
