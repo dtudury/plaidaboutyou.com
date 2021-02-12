@@ -144,28 +144,33 @@ const program = createProgram(
     uniform float tieUpHeight;
     attribute vec4 vertPosition;
     varying vec4 fragColor;
-    bool isWarp (float x, float y) {
-      int a = tieUp[int(0.5 + mod(y, tieUpHeight) * tieUpWidth + mod(x, tieUpWidth))];
+
+
+    bool isWarp (float x, float y, float width, float height) {
+      int a = tieUp[int(mod(y, height) * width + mod(x, width))];
       return a == 0;
     }
     void main() {
-      float x = vertPosition.x;
-      float y = vertPosition.y;
-      float ox = vertPosition.z;
-      float oy = vertPosition.w;
+      float width = floor(0.5 + warpLength);
+      float height = floor(0.5 + weftLength);
+      float x = floor(0.5 + vertPosition.x);
+      float y = floor(0.5 + vertPosition.y);
+      float ox = floor(0.5 + vertPosition.z);
+      float oy = floor(0.5 + vertPosition.w);
       float texture = 0.3;
-      if (isWarp(x, y)) {
+      if (isWarp(x, y, floor(0.5 + tieUpWidth), floor(0.5 + tieUpHeight))) {
+        int warpIndex = int(mod(x, width));
         if (ox == 1.0) {
-          fragColor = vec4((1.0 - texture) * colors[warp[int(0.5 + mod(x, warpLength))]], 1.0);
+          fragColor = vec4((1.0 - texture) * colors[warp[warpIndex]], 1.0);
         } else {
-          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[warp[int(0.5 + mod(x, warpLength))]], 1.0);
+          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[warp[warpIndex]], 1.0);
         }
       } else {
-        fragColor = vec4(colors[weft[int(0.5 + mod(y, weftLength))]], 1.0);
+        int weftIndex = int(mod(y, height));
         if (oy == 1.0) {
-          fragColor = vec4((1.0 - texture) * colors[weft[int(0.5 + mod(y, weftLength))]], 1.0);
+          fragColor = vec4((1.0 - texture) * colors[weft[weftIndex]], 1.0);
         } else {
-          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[weft[int(0.5 + mod(y, weftLength))]], 1.0);
+          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[weft[weftIndex]], 1.0);
         }
       }
       gl_Position = vec4(
