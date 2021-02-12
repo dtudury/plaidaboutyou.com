@@ -156,16 +156,16 @@ const program = createProgram(
       float texture = 0.3;
       if (isWarp(x, y)) {
         if (ox == 1.0) {
-          fragColor = vec4((1.0 - texture) * colors[warp[int(mod(x, warpLength))]], 1.0);
+          fragColor = vec4((1.0 - texture) * colors[warp[int(0.5 + mod(x, warpLength))]], 1.0);
         } else {
-          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[warp[int(mod(x, warpLength))]], 1.0);
+          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[warp[int(0.5 + mod(x, warpLength))]], 1.0);
         }
       } else {
-        fragColor = vec4(colors[weft[int(mod(y, weftLength))]], 1.0);
+        fragColor = vec4(colors[weft[int(0.5 + mod(y, weftLength))]], 1.0);
         if (oy == 1.0) {
-          fragColor = vec4((1.0 - texture) * colors[weft[int(mod(y, weftLength))]], 1.0);
+          fragColor = vec4((1.0 - texture) * colors[weft[int(0.5 + mod(y, weftLength))]], 1.0);
         } else {
-          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[weft[int(mod(y, weftLength))]], 1.0);
+          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[weft[int(0.5 + mod(y, weftLength))]], 1.0);
         }
       }
       gl_Position = vec4(
