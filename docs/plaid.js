@@ -131,7 +131,7 @@ if (!gl) {
 const program = createProgram(
   gl,
   createShader(gl, gl.VERTEX_SHADER, `
-    precision lowp float;
+    precision mediump float;
     uniform vec2 resolution;
     uniform vec2 scale;
     uniform vec3 colors[16];
@@ -177,7 +177,7 @@ const program = createProgram(
     }
   `),
   createShader(gl, gl.FRAGMENT_SHADER, `
-    precision lowp float;
+    precision mediump float;
     varying vec4 fragColor;
     void main() {
       gl_FragColor = fragColor;
