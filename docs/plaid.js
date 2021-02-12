@@ -47,7 +47,7 @@ const model = window.model = proxy({
 
 function expandColors (colors) {
   if (Array.isArray(colors)) return colors.map(({ color, count }) => Array(count).fill(expandColors(model.colors[color]))).flat(2)
-  if (typeof colors === 'string') return colors
+  if (typeof colors === 'string') return [colors]
 }
 
 function encodeColorsValue (colors) {
