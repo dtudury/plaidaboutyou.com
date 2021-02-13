@@ -41,14 +41,14 @@ const program = createProgram(
       float oy = floor(0.5 + vertPosition.w);
       float texture = 0.3;
       if (isWarp(x, y)) {
-        int warpIndex = int(mod(x, width));
+        int warpIndex = int(mod(x + 0.5, width));
         if (ox == 1.0) {
           fragColor = vec4((1.0 - texture) * colors[warp[warpIndex]], 1.0);
         } else {
           fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[warp[warpIndex]], 1.0);
         }
       } else {
-        int weftIndex = int(mod(y, height));
+        int weftIndex = int(mod(y + 0.5, height));
         if (oy == 1.0) {
           fragColor = vec4((1.0 - texture) * colors[weft[weftIndex]], 1.0);
         } else {
@@ -139,7 +139,6 @@ function resizeCanvas () {
   gl.uniform1iv(weftLocation, weft)
   gl.uniform1f(weftLengthLocation, weft.length)
 
-  console.log(model.shafts, JSON.stringify(model.tieUp))
   gl.uniform1iv(tieUpLocation, model.tieUp.map(row => row.concat(Array(model.shafts - row.length).fill(0))).flat())
   gl.uniform1f(tieUpWidthLocation, model.treadles)
   gl.uniform1f(tieUpHeightLocation, model.shafts)
