@@ -1,5 +1,7 @@
 import { proxy } from './horseless.0.5.1.min.esm.js' // '/unpkg/horseless/horseless.js'
 
+export const unproxy = p => JSON.parse(JSON.stringify(p))
+
 export function saveModel () {
   document.location.hash = encodeModel(model)
 }
@@ -26,14 +28,17 @@ export const model = window.model = proxy({
       { color: 'B4W4', count: 8 }
     ]
   },
-  fills: {
+  patterns: {
     N: [1],
-    STRAIGHT: [
-      { fill: 'N', offset: 1 }
+    REL: [
+      { name: 'N', offset: 1 }
     ],
-    POINT4: [
-      { fill: 'STRAIGHT', count: 3 },
-      { fill: 'STRAIGHT', count: 3, reverse: true }
+    ABS: [1, 2, 3, 4],
+    TEST: [
+      { name: 'REL', count: 3 },
+      { name: 'REL', count: 3, direction: -1 },
+      { name: 'ABS' },
+      { name: 'ABS', offset: 10, count: 2, direction: -1 }
     ]
   },
   warp: 'GLEN',
@@ -53,14 +58,50 @@ export const model = window.model = proxy({
   scale: 3
 })
 
-function expandFills (fills, offsets = {}) {
-  // const output = []
-  return fills
+function encodePatternsValue (patterns) {
+  return `[${patterns.map(pattern => {
+    if (typeof pattern === 'number') return pattern
+    let encoded = ''
+    if (pattern.direction === -1) encoded += '-'
+    encoded += pattern.name
+    if (pattern.offset > 0) encoded += `+${pattern.offset}`
+    if (pattern.offset < 0) encoded += pattern.offset
+    if (pattern.count > 1) encoded += `*${pattern.count}`
+    return encoded
+  }).join(',')}]`
+}
+Object.entries(model.patterns).forEach(([name, value]) => console.log(name, encodePatternsValue(value)))
+
+function expandPatterns (patterns, offset = 0, direction = 1, patternOffsets = {}, indent = '') {
+  console.log(indent, JSON.stringify(patterns))
+  if (typeof patterns === 'number') {
+    console.error('patterns is a number?!')
+    throw new Error('patterns should be arrays')
+  }
+  const expanded = []
+  if (direction === -1) {
+    patterns = patterns.slice().reverse()
+  }
+  patterns.forEach(pattern => {
+    if (typeof pattern === 'number') {
+      expanded.push(pattern + offset)
+    } else {
+      const name = pattern.name
+      const patternDirection = direction * (pattern.direction ?? 1)
+      for (let i = 0; i < (pattern.count ?? 1); ++i) {
+        patternOffsets[name] = patternOffsets[name] ?? 0
+        const subPattern = expandPatterns(model.patterns[name], offset + patternOffsets[name], patternDirection, patternOffsets, indent + '  ')
+        patternOffsets[name] += (pattern.offset ?? 0) * patternDirection
+        expanded.push(subPattern)
+      }
+    }
+  })
+  return expanded.flat()
 }
 
 console.log(
   JSON.parse(JSON.stringify(
-    expandFills(model.fills.POINT4)
+    expandPatterns(model.patterns.TEST)
   ))
 )
 
