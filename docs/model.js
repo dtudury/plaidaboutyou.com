@@ -7,26 +7,42 @@ export function saveModel () {
 }
 
 export function expandColors (colors) {
-  if (Array.isArray(colors)) return colors.map(({ color, count }) => Array(count).fill(expandColors(model.colors[color]))).flat(2)
-  if (typeof colors === 'string') return [colors]
+  if (!colors) throw new Error('no colors')
+  if (Array.isArray(colors)) return colors.map(expandColors).flat()
+  if (typeof colors === 'object') {
+    let { color, count } = colors
+    if (typeof color === 'string') {
+      color = expandColors(color)
+    }
+    return Array(count).fill(expandColors(color)).flat(2)
+  }
+  if (typeof colors === 'string' && colors.startsWith('0x')) return [colors]
+  return expandColors(model.colors[colors])
 }
 
 export const model = window.model = proxy({
   colors: {
-    B: '0x000000',
-    W: '0xffffff',
-    B8W8: [
-      { color: 'B', count: 8 },
-      { color: 'W', count: 8 }
-    ],
-    B4W4: [
-      { color: 'B', count: 4 },
-      { color: 'W', count: 4 }
-    ],
-    GLEN: [
-      { color: 'B8W8', count: 4 },
-      { color: 'B4W4', count: 8 }
-    ]
+    B: { color: '0x000000', count: 1 },
+    W: { color: '0xffffff', count: 1 },
+    GLEN: {
+      color: [
+        {
+          color: [
+            { color: 'B', count: 8 },
+            { color: 'W', count: 8 }
+          ],
+          count: 4
+        },
+        {
+          color: [
+            { color: 'B', count: 4 },
+            { color: 'W', count: 4 }
+          ],
+          count: 8
+        }
+      ],
+      count: 1
+    }
   },
   patterns: {
     N: [1],
@@ -41,8 +57,8 @@ export const model = window.model = proxy({
       { name: 'ABS', offset: 10, count: 2, direction: -1 }
     ]
   },
-  warp: 'GLEN',
-  weft: 'GLEN',
+  warp: { color: 'GLEN', count: 1 },
+  weft: { color: 'GLEN', count: 1 },
   tieUp: [
     [1, 1, 1, 1, 0, 0, 0, 0],
     [0, 1, 1, 1, 1, 0, 0, 0],
@@ -58,6 +74,7 @@ export const model = window.model = proxy({
   scale: 3
 })
 
+/*
 function encodePatternsValue (patterns) {
   return `[${patterns.map(pattern => {
     if (typeof pattern === 'number') return pattern
@@ -71,9 +88,9 @@ function encodePatternsValue (patterns) {
   }).join(',')}]`
 }
 Object.entries(model.patterns).forEach(([name, value]) => console.log(name, encodePatternsValue(value)))
+*/
 
 function expandPatterns (patterns, offset = 0, direction = 1, patternOffsets = {}, indent = '') {
-  console.log(indent, JSON.stringify(patterns))
   if (typeof patterns === 'number') {
     console.error('patterns is a number?!')
     throw new Error('patterns should be arrays')
@@ -106,14 +123,15 @@ console.log(
 )
 
 function encodeColorsValue (colors) {
-  if (Array.isArray(colors)) return `[${colors.map(({ color, count }) => `${color}*${count}`).join(',')}]`
+  if (Array.isArray(colors)) return `[${colors.map(encodeColorsValue).join(',')}]`
+  if (typeof colors === 'object') return `${encodeColorsValue(colors.color)}${colors.count > 1 ? `*${colors.count}` : ''}`
   if (typeof colors === 'string') return colors
 }
 
 function encodeModel (model) {
   const colorPart = `COLORS=${Object.entries(model.colors).map(([name, value]) => `${name}:${encodeColorsValue(value)}`).join(';')}`
-  const warpPart = `WARP=${model.warp}`
-  const weftPart = `WEFT=${model.weft}`
+  const warpPart = `WARP=${encodeColorsValue(model.warp)}`
+  const weftPart = `WEFT=${encodeColorsValue(model.weft)}`
   const shafts = model.tieUp.reduce((acc, row) => Math.max(acc, row.length), 0)
   const tieUpPart = `TIE-UP=${
     model.tieUp
@@ -125,12 +143,41 @@ function encodeModel (model) {
 }
 
 function decodeColorsValue (colors) {
-  if (colors.charAt(0) === '[') {
-    return colors.slice(1, colors.length - 1).split(',').map(stripe => {
-      const [color, count] = stripe.split('*')
-      return { color, count: +count }
-    })
-  } else return colors
+  let i = 0
+  return readColor()
+  function readArray () {
+    const array = []
+    ++i
+    while (colors.charAt(i) !== ']') {
+      array.push(readColor())
+      if (colors.charAt(i) === ',') {
+        ++i
+      }
+    }
+    ++i
+    return array
+  }
+  function readColor () {
+    const color = { color: '', count: 1 }
+    if (colors.charAt(i) === '[') {
+      color.color = readArray()
+    } else {
+      while (!colors.charAt(i).match(/[*,\]]/) && i < colors.length) {
+        color.color += colors.charAt(i)
+        ++i
+      }
+    }
+    if (colors.charAt(i) === '*') {
+      ++i
+      let numString = ''
+      while (!colors.charAt(i).match(/[,\]]/) && i < colors.length) {
+        numString += colors.charAt(i)
+        ++i
+      }
+      color.count = +numString
+    }
+    return color
+  }
 }
 
 function decodeModel (string) {
@@ -146,10 +193,10 @@ function decodeModel (string) {
           }))
         break
       case 'WARP':
-        obj.warp = data
+        obj.warp = decodeColorsValue(data)
         break
       case 'WEFT':
-        obj.weft = data
+        obj.weft = decodeColorsValue(data)
         break
       case 'TIE-UP': {
         obj.tieUp = data.split(';')

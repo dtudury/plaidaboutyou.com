@@ -130,8 +130,8 @@ function resizeCanvas () {
     }
     return colorMap[hex]
   }
-  const warp = expandColors(model.colors[model.warp]).map(hexMapper)
-  const weft = expandColors(model.colors[model.weft]).map(hexMapper)
+  const warp = expandColors(model.warp).map(hexMapper)
+  const weft = expandColors(model.weft).map(hexMapper)
 
   gl.uniform3fv(colorsLocation, colorValues.flat())
   gl.uniform1iv(warpLocation, warp)
