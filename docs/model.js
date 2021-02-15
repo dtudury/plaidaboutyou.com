@@ -29,10 +29,10 @@ export function expandValue (inValue, dictionary, offset = 0, direction = 1, off
     for (let i = 0; i < count; ++i) {
       const currentOffset = offsetMap.get(inValue) || 0
       outValue.push(expandValue(inValue, dictionary, offset + currentOffset, arrayDirection, offsetMap, indent + '  '))
-      offsetMap.set(inValue, currentOffset + direction * offsetStep)
+      offsetMap.set(inValue, currentOffset + arrayDirection * offsetStep)
     }
     outValue = outValue.flat()
-  } else if (typeof inValue === 'number') outValue = inValue + offset * direction
+  } else if (typeof inValue === 'number') outValue = inValue + offset
   else if (typeof inValue === 'string' && inValue.startsWith('0x')) outValue = [inValue]
   else outValue = expandValue(dictionary[inValue], dictionary, offset, direction, offsetMap, indent + '  ')
   // console.log(indent, 'expanded to', outValue)
@@ -41,27 +41,9 @@ export function expandValue (inValue, dictionary, offset = 0, direction = 1, off
 
 export const model = window.model = proxy({
   colors: {
-    B: { value: '0x000000', count: 1 },
-    W: { value: '0xffffff', count: 1 },
-    GLEN: {
-      value: [
-        {
-          value: [
-            { value: 'B', count: 8 },
-            { value: 'W', count: 8 }
-          ],
-          count: 4
-        },
-        {
-          value: [
-            { value: 'B', count: 4 },
-            { value: 'W', count: 4 }
-          ],
-          count: 8
-        }
-      ],
-      count: 1
-    }
+    B: decodeString('0x000000'),
+    W: decodeString('0xffffff'),
+    GLEN: decodeString('[[B*8,W*8]*4,[B*4,W*4]*8]')
   },
   patterns: {
     N: [1],
@@ -92,50 +74,6 @@ export const model = window.model = proxy({
   shafts: 8,
   scale: 3
 })
-
-/*
-function encodePatternsValue (patterns) {
-  return `[${patterns.map(pattern => {
-    if (typeof pattern === 'number') return pattern
-    let encoded = ''
-    if (pattern.direction === -1) encoded += '-'
-    encoded += pattern.name
-    if (pattern.offset > 0) encoded += `+${pattern.offset}`
-    if (pattern.offset < 0) encoded += pattern.offset
-    if (pattern.count > 1) encoded += `*${pattern.count}`
-    return encoded
-  }).join(',')}]`
-}
-Object.entries(model.patterns).forEach(([name, value]) => console.log(name, encodePatternsValue(value)))
-*/
-
-/*
-function expandPatterns (patterns, offset = 0, direction = 1, patternOffsets = {}, indent = '') {
-  if (typeof patterns === 'number') {
-    console.error('patterns is a number?!')
-    throw new Error('patterns should be arrays')
-  }
-  const expanded = []
-  if (direction === -1) {
-    patterns = patterns.slice().reverse()
-  }
-  patterns.forEach(pattern => {
-    if (typeof pattern === 'number') {
-      expanded.push(pattern + offset)
-    } else {
-      const name = pattern.name
-      const patternDirection = direction * (pattern.direction ?? 1)
-      for (let i = 0; i < (pattern.count ?? 1); ++i) {
-        patternOffsets[name] = patternOffsets[name] ?? 0
-        const subPattern = expandPatterns(model.patterns[name], offset + patternOffsets[name], patternDirection, patternOffsets, indent + '  ')
-        patternOffsets[name] += (pattern.offset ?? 0) * patternDirection
-        expanded.push(subPattern)
-      }
-    }
-  })
-  return expanded.flat()
-}
-*/
 
 export function encodeValue (value) {
   if (Array.isArray(value)) return `[${value.map(encodeValue).join(',')}]`
