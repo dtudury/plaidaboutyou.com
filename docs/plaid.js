@@ -30,9 +30,11 @@ const program = createProgram(
     varying vec4 fragColor;
 
     bool isWarp (float x, float y) {
+      int treadle = treadling[int(0.5 + mod(y + 0.5, treadlingLength))];
+      int shaft = threading[int(0.5 + mod(x + 0.5, threadingLength))];
       x = floor(mod(x + 0.5, treadles));
       y = floor(mod(y + 0.5, shafts));
-      int a = tieUp[int(0.5 + y * treadles + x)];
+      int a = tieUp[shaft * int(0.5 + treadles) + treadle];
       return a == 0;
     }
 
@@ -148,9 +150,6 @@ function resizeCanvas () {
   const weft = expandValue(model.weft, model.vars).map(hexMapper)
   const threading = expandValue(model.threading, model.vars).map(shaftMapper)
   const treadling = expandValue(model.treadling, model.vars).map(treadleMapper)
-
-  console.log(threading)
-  console.log(treadling)
 
   gl.uniform3fv(colorsLocation, colorValues.flat())
   gl.uniform1iv(warpLocation, warp)
