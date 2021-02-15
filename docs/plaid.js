@@ -20,18 +20,18 @@ const program = createProgram(
     uniform int weft[128];
     uniform float weftLength;
     uniform int tieUp[64];
-    uniform float tieUpWidth;
-    uniform float tieUpHeight;
+    uniform float treadles;
+    uniform float shafts;
     attribute vec4 vertPosition;
     varying vec4 fragColor;
 
-
     bool isWarp (float x, float y) {
-      x = floor(mod(x + 0.5, tieUpWidth));
-      y = floor(mod(y + 0.5, tieUpHeight));
-      int a = tieUp[int(0.5 + y * tieUpWidth + x)];
+      x = floor(mod(x + 0.5, treadles));
+      y = floor(mod(y + 0.5, shafts));
+      int a = tieUp[int(0.5 + y * treadles + x)];
       return a == 0;
     }
+
     void main() {
       float width = floor(0.5 + warpLength);
       float height = floor(0.5 + weftLength);
@@ -66,6 +66,7 @@ const program = createProgram(
   createShader(gl, gl.FRAGMENT_SHADER, `
     precision mediump float;
     varying vec4 fragColor;
+
     void main() {
       gl_FragColor = fragColor;
     }
@@ -84,8 +85,8 @@ gl.enableVertexAttribArray(positionAttribLocation)
 const resolutionLocation = gl.getUniformLocation(program, 'resolution')
 const scaleLocation = gl.getUniformLocation(program, 'scale')
 const tieUpLocation = gl.getUniformLocation(program, 'tieUp')
-const tieUpWidthLocation = gl.getUniformLocation(program, 'tieUpWidth')
-const tieUpHeightLocation = gl.getUniformLocation(program, 'tieUpHeight')
+const treadlesLocation = gl.getUniformLocation(program, 'treadles')
+const shaftsLocation = gl.getUniformLocation(program, 'shafts')
 const colorsLocation = gl.getUniformLocation(program, 'colors')
 const warpLocation = gl.getUniformLocation(program, 'warp')
 const warpLengthLocation = gl.getUniformLocation(program, 'warpLength')
@@ -130,8 +131,8 @@ function resizeCanvas () {
     }
     return colorMap[hex]
   }
-  const warp = expandValue(model.warp, model.colors).map(hexMapper)
-  const weft = expandValue(model.weft, model.colors).map(hexMapper)
+  const warp = expandValue(model.warp, model.vars).map(hexMapper)
+  const weft = expandValue(model.weft, model.vars).map(hexMapper)
 
   gl.uniform3fv(colorsLocation, colorValues.flat())
   gl.uniform1iv(warpLocation, warp)
@@ -140,8 +141,8 @@ function resizeCanvas () {
   gl.uniform1f(weftLengthLocation, weft.length)
 
   gl.uniform1iv(tieUpLocation, model.tieUp.map(row => row.concat(Array(model.shafts - row.length).fill(0))).flat())
-  gl.uniform1f(tieUpWidthLocation, model.treadles)
-  gl.uniform1f(tieUpHeightLocation, model.shafts)
+  gl.uniform1f(treadlesLocation, model.treadles)
+  gl.uniform1f(shaftsLocation, model.shafts)
   saveModel()
 
   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 4)

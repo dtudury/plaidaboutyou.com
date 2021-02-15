@@ -6,10 +6,37 @@ export function saveModel () {
   document.location.hash = encodeModel(model)
 }
 
+export const model = window.model = proxy({
+  vars: {
+    R: decodeString('0x773300'),
+    B: decodeString('0x331100'),
+    W: decodeString('0xffddaa'),
+    GLEN: decodeString('[[B*8,W*8]*4,[B*4,R*4]*8]'),
+    POINTADV: decodeString('[1,2,3,4,3,2,1]+1*4')
+  },
+  warp: 'GLEN',
+  weft: { value: 'GLEN', count: 1 },
+  tieUp: [
+    [1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 1, 1, 1],
+    [1, 1, 0, 0, 0, 0, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 1]
+  ],
+  treadles: 8,
+  shafts: 8,
+  scale: 3
+})
+
+console.log(expandValue(model.vars.POINTADV))
+
 export function expandValue (inValue, dictionary, offset = 0, direction = 1, offsetMap = new Map(), indent = '') {
   // console.log(indent, 'expanding', JSON.stringify(inValue), typeof inValue)
   let outValue
-  if (!inValue) throw new Error('no colors')
+  if (!inValue) throw new Error('no value')
   if (Array.isArray(inValue)) {
     outValue = []
     inValue.forEach(v => {
@@ -39,42 +66,6 @@ export function expandValue (inValue, dictionary, offset = 0, direction = 1, off
   return outValue
 }
 
-export const model = window.model = proxy({
-  colors: {
-    B: decodeString('0x000000'),
-    W: decodeString('0xffffff'),
-    GLEN: decodeString('[[B*8,W*8]*4,[B*4,W*4]*8]')
-  },
-  patterns: {
-    N: [1],
-    REL: [
-      { name: 'N', offset: 1 }
-    ],
-    ABS: [1, 2, 3, 4],
-    TEST: [
-      { name: 'REL', count: 3 },
-      { name: 'REL', count: 3, direction: -1 },
-      { name: 'ABS' },
-      { name: 'ABS', offset: 10, count: 2, direction: -1 }
-    ]
-  },
-  warp: { value: 'GLEN', count: 1 },
-  weft: { value: 'GLEN', count: 1 },
-  tieUp: [
-    [1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 1, 1, 1, 1, 0, 0, 0],
-    [0, 0, 1, 1, 1, 1, 0, 0],
-    [0, 0, 0, 1, 1, 1, 1, 0],
-    [0, 0, 0, 0, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 1, 1, 1],
-    [1, 1, 0, 0, 0, 0, 1, 1],
-    [1, 1, 1, 0, 0, 0, 0, 1]
-  ],
-  treadles: 8,
-  shafts: 8,
-  scale: 3
-})
-
 export function encodeValue (value) {
   if (Array.isArray(value)) return `[${value.map(encodeValue).join(',')}]`
   if (typeof value === 'object') {
@@ -84,11 +75,11 @@ export function encodeValue (value) {
     const timesHowMany = value.count > 1 ? `*${value.count}` : ''
     return `${minusSign}${encodedValue}${offetSize}${timesHowMany}`
   }
-  if (typeof value === 'string') return value
+  return value
 }
 
 function encodeModel (model) {
-  const colorPart = `COLORS=${Object.entries(model.colors).map(([name, value]) => `${name}:${encodeValue(value)}`).join(';')}`
+  const varsPart = `VARS=${Object.entries(model.vars).map(([name, value]) => `${name}:${encodeValue(value)}`).join(';')}`
   const warpPart = `WARP=${encodeValue(model.warp)}`
   const weftPart = `WEFT=${encodeValue(model.weft)}`
   const shafts = model.tieUp.reduce((acc, row) => Math.max(acc, row.length), 0)
@@ -98,7 +89,7 @@ function encodeModel (model) {
       .map(row => `0b${BigInt(`0b${row.join('')}`).toString(2)
   }`).join(';')}`
   const constantsPart = `CONSTANTS=${['treadles', 'shafts', 'scale'].map(key => `${key}:${model[key]}`).join(';')}`
-  return [colorPart, warpPart, weftPart, tieUpPart, constantsPart].join('___')
+  return [varsPart, warpPart, weftPart, tieUpPart, constantsPart].join('___')
 }
 
 export function decodeString (string) {
@@ -170,8 +161,8 @@ function decodeModel (string) {
   string.split('___').forEach(part => {
     const [label, data] = part.split('=')
     switch (label.toUpperCase()) {
-      case 'COLORS':
-        obj.colors = Object.fromEntries(data.split(';')
+      case 'VARS':
+        obj.vars = Object.fromEntries(data.split(';')
           .map(namevalue => {
             const [name, value] = namevalue.split(/:(.*)/)
             return [name, decodeString(value)]

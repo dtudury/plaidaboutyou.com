@@ -16,8 +16,8 @@ function testEncoding (inputValue, expected) {
   const encodedValue = encodeValue(inputValue)
   console.log('=== encoding')
   console.log('input:', inputValue)
-  console.log('pass:', encodeValue === expected)
-  console.log('actual:', encodeValue)
+  console.log('pass:', encodedValue === expected)
+  console.log('actual:', encodedValue)
   console.log('expected:', expected)
   return { pass: encodedValue === expected, title: 'encoding to ' + expected, expected, actual: encodedValue }
 }
@@ -46,9 +46,21 @@ const goodDecoded = {
   count: 8,
   reverse: true
 }
+const pointAdvancingEncoded = '[1,2,3]+2*3'
+const pointAdvancingDecoded = {
+  value: [
+    { value: 1, count: 1 },
+    { value: 2, count: 1 },
+    { value: 3, count: 1 }
+  ],
+  count: 3,
+  offset: 2
+}
 const tests = [
   testDecoding(goodEncoded, goodDecoded),
   testEncoding(goodDecoded, goodEncoded),
+  testDecoding(pointAdvancingEncoded, pointAdvancingDecoded),
+  testEncoding(pointAdvancingDecoded, pointAdvancingEncoded),
   testExpansion(
     'A',
     [1, 2, 3, 4],
@@ -102,6 +114,8 @@ const testResultRenderer = ({ pass, title, expected, actual }) => {
       <span style="color: green;">PASS</span>
       <br>
       title: ${title}
+      <br>
+      result: ${expected}
       <br>
       <br>
     `
