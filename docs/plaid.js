@@ -1,6 +1,6 @@
 import { watchFunction } from './horseless.0.5.1.min.esm.js' // '/unpkg/horseless/horseless.js'
 import { createProgram, createShader } from './webglHelpers.js'
-import { model, saveModel, expandValue } from './model.js'
+import { model, saveModel, expandValue, unproxy } from './model.js'
 
 const canvas = document.querySelector('canvas')
 const gl = canvas.getContext('webgl')
@@ -30,12 +30,10 @@ const program = createProgram(
     varying vec4 fragColor;
 
     bool isWarp (float x, float y) {
-      int treadle = treadling[int(0.5 + mod(y + 0.5, treadlingLength))];
-      int shaft = threading[int(0.5 + mod(x + 0.5, threadingLength))];
-      x = floor(mod(x + 0.5, treadles));
-      y = floor(mod(y + 0.5, shafts));
-      int a = tieUp[shaft * int(0.5 + treadles) + treadle];
-      return a == 0;
+      int treadle = treadling[int(mod(y + 0.5, treadlingLength))];
+      int shaft = threading[int(mod(x + 0.5, threadingLength))];
+      int a = tieUp[treadle * int(0.5 + shafts) + shaft];
+      return a == 1;
     }
 
     void main() {
@@ -161,9 +159,13 @@ function resizeCanvas () {
   gl.uniform1iv(treadlingLocation, treadling)
   gl.uniform1f(treadlingLengthLocation, treadling.length)
 
-  gl.uniform1iv(tieUpLocation, model.tieUp.map(row => row.concat(Array(model.shafts - row.length).fill(0))).flat())
+  // gl.uniform1iv(tieUpLocation, model.tieUp.map(row => row.concat(Array(model.shafts - row.length).fill(0))).flat())
+  gl.uniform1iv(tieUpLocation, model.tieUp.map(arr => arr.slice().reverse()).flat())
   gl.uniform1f(treadlesLocation, treadles)
   gl.uniform1f(shaftsLocation, shafts)
+
+  console.log(unproxy({ shafts, treadles, warp, weft, threading, treadling, tieUp: model.tieUp }))
+
   saveModel()
 
   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 4)
