@@ -6,37 +6,56 @@ export function saveModel () {
   document.location.hash = encodeModel(model)
 }
 
-export function expandColors (colors) {
-  if (!colors) throw new Error('no colors')
-  if (Array.isArray(colors)) return colors.map(expandColors).flat()
-  if (typeof colors === 'object') {
-    let { color, count } = colors
-    if (typeof color === 'string') {
-      color = expandColors(color)
+export function expandValue (inValue, dictionary, offset = 0, direction = 1, offsetMap = new Map(), indent = '') {
+  // console.log(indent, 'expanding', JSON.stringify(inValue), typeof inValue)
+  let outValue
+  if (!inValue) throw new Error('no colors')
+  if (Array.isArray(inValue)) {
+    outValue = []
+    inValue.forEach(v => {
+      if (direction === 1) {
+        outValue.push(expandValue(v, dictionary, offset, direction, offsetMap, indent + '  '))
+      } else {
+        outValue.unshift(expandValue(v, dictionary, offset, direction, offsetMap, indent + '  '))
+      }
+    })
+    outValue = outValue.flat()
+  } else if (typeof inValue === 'object') {
+    const count = inValue.count
+    const arrayDirection = inValue.reverse ? -direction : direction
+    const offsetStep = inValue.offset
+    inValue = inValue.value
+    outValue = []
+    for (let i = 0; i < count; ++i) {
+      const currentOffset = offsetMap.get(inValue) || 0
+      outValue.push(expandValue(inValue, dictionary, offset + currentOffset, arrayDirection, offsetMap, indent + '  '))
+      offsetMap.set(inValue, currentOffset + direction * offsetStep)
     }
-    return Array(count).fill(expandColors(color)).flat(2)
-  }
-  if (typeof colors === 'string' && colors.startsWith('0x')) return [colors]
-  return expandColors(model.colors[colors])
+    outValue = outValue.flat()
+  } else if (typeof inValue === 'number') outValue = inValue + offset * direction
+  else if (typeof inValue === 'string' && inValue.startsWith('0x')) outValue = [inValue]
+  else outValue = expandValue(dictionary[inValue], dictionary, offset, direction, offsetMap, indent + '  ')
+  // console.log(indent, 'expanded to', outValue)
+  return outValue
 }
 
 export const model = window.model = proxy({
   colors: {
-    B: { color: '0x000000', count: 1 },
-    W: { color: '0xffffff', count: 1 },
+    B: { value: '0x000000', count: 1 },
+    W: { value: '0xffffff', count: 1 },
     GLEN: {
-      color: [
+      value: [
         {
-          color: [
-            { color: 'B', count: 8 },
-            { color: 'W', count: 8 }
+          value: [
+            { value: 'B', count: 8 },
+            { value: 'W', count: 8 }
           ],
           count: 4
         },
         {
-          color: [
-            { color: 'B', count: 4 },
-            { color: 'W', count: 4 }
+          value: [
+            { value: 'B', count: 4 },
+            { value: 'W', count: 4 }
           ],
           count: 8
         }
@@ -57,8 +76,8 @@ export const model = window.model = proxy({
       { name: 'ABS', offset: 10, count: 2, direction: -1 }
     ]
   },
-  warp: { color: 'GLEN', count: 1 },
-  weft: { color: 'GLEN', count: 1 },
+  warp: { value: 'GLEN', count: 1 },
+  weft: { value: 'GLEN', count: 1 },
   tieUp: [
     [1, 1, 1, 1, 0, 0, 0, 0],
     [0, 1, 1, 1, 1, 0, 0, 0],
@@ -90,6 +109,7 @@ function encodePatternsValue (patterns) {
 Object.entries(model.patterns).forEach(([name, value]) => console.log(name, encodePatternsValue(value)))
 */
 
+/*
 function expandPatterns (patterns, offset = 0, direction = 1, patternOffsets = {}, indent = '') {
   if (typeof patterns === 'number') {
     console.error('patterns is a number?!')
@@ -115,23 +135,24 @@ function expandPatterns (patterns, offset = 0, direction = 1, patternOffsets = {
   })
   return expanded.flat()
 }
+*/
 
-console.log(
-  JSON.parse(JSON.stringify(
-    expandPatterns(model.patterns.TEST)
-  ))
-)
-
-function encodeColorsValue (colors) {
-  if (Array.isArray(colors)) return `[${colors.map(encodeColorsValue).join(',')}]`
-  if (typeof colors === 'object') return `${encodeColorsValue(colors.color)}${colors.count > 1 ? `*${colors.count}` : ''}`
-  if (typeof colors === 'string') return colors
+export function encodeValue (value) {
+  if (Array.isArray(value)) return `[${value.map(encodeValue).join(',')}]`
+  if (typeof value === 'object') {
+    const minusSign = value.reverse ? '-' : ''
+    const encodedValue = encodeValue(value.value)
+    const offetSize = value.offset ? (value.offset > 0 ? `+${value.offset}` : value.offset) : ''
+    const timesHowMany = value.count > 1 ? `*${value.count}` : ''
+    return `${minusSign}${encodedValue}${offetSize}${timesHowMany}`
+  }
+  if (typeof value === 'string') return value
 }
 
 function encodeModel (model) {
-  const colorPart = `COLORS=${Object.entries(model.colors).map(([name, value]) => `${name}:${encodeColorsValue(value)}`).join(';')}`
-  const warpPart = `WARP=${encodeColorsValue(model.warp)}`
-  const weftPart = `WEFT=${encodeColorsValue(model.weft)}`
+  const colorPart = `COLORS=${Object.entries(model.colors).map(([name, value]) => `${name}:${encodeValue(value)}`).join(';')}`
+  const warpPart = `WARP=${encodeValue(model.warp)}`
+  const weftPart = `WEFT=${encodeValue(model.weft)}`
   const shafts = model.tieUp.reduce((acc, row) => Math.max(acc, row.length), 0)
   const tieUpPart = `TIE-UP=${
     model.tieUp
@@ -142,41 +163,67 @@ function encodeModel (model) {
   return [colorPart, warpPart, weftPart, tieUpPart, constantsPart].join('___')
 }
 
-function decodeColorsValue (colors) {
+export function decodeString (string) {
   let i = 0
-  return readColor()
+  return readNode()
   function readArray () {
     const array = []
     ++i
-    while (colors.charAt(i) !== ']') {
-      array.push(readColor())
-      if (colors.charAt(i) === ',') {
+    while (string.charAt(i) !== ']') {
+      array.push(readNode())
+      if (string.charAt(i) === ',') {
         ++i
       }
     }
     ++i
+    // console.log('read array', JSON.stringify(array), i, string)
     return array
   }
-  function readColor () {
-    const color = { color: '', count: 1 }
-    if (colors.charAt(i) === '[') {
-      color.color = readArray()
-    } else {
-      while (!colors.charAt(i).match(/[*,\]]/) && i < colors.length) {
-        color.color += colors.charAt(i)
-        ++i
-      }
-    }
-    if (colors.charAt(i) === '*') {
+  function readInt () {
+    let numberPart = ''
+    while (string.charAt(i).match(/\d/)) {
+      numberPart += string.charAt(i)
       ++i
-      let numString = ''
-      while (!colors.charAt(i).match(/[,\]]/) && i < colors.length) {
-        numString += colors.charAt(i)
-        ++i
-      }
-      color.count = +numString
     }
-    return color
+    // console.log('read int', numberPart, i, string)
+    return parseInt(numberPart)
+  }
+  function readNode () {
+    const node = { value: '', count: 1 }
+    while (!string.charAt(i).match(/[,\]]/) && i < string.length) {
+      switch (string.charAt(i)) {
+        case '[':
+          node.value = readArray()
+          break
+        case '*': {
+          ++i
+          node.count = readInt()
+          break
+        }
+        case '+':
+          ++i
+          node.offset = readInt()
+          break
+        case '-': {
+          ++i
+          const offset = readInt()
+          if (offset) {
+            node.offset = -offset
+          } else {
+            node.reverse = true
+          }
+          break
+        }
+        default:
+          while (!string.charAt(i).match(/[-+*,\]]/) && i < string.length) {
+            node.value += string.charAt(i)
+            ++i
+          }
+          if (node.value.match(/^[-\d]*$/)) node.value = +node.value
+      }
+    }
+    // console.log('read node', JSON.stringify(node), i, string)
+    return node
   }
 }
 
@@ -189,14 +236,14 @@ function decodeModel (string) {
         obj.colors = Object.fromEntries(data.split(';')
           .map(namevalue => {
             const [name, value] = namevalue.split(/:(.*)/)
-            return [name, decodeColorsValue(value)]
+            return [name, decodeString(value)]
           }))
         break
       case 'WARP':
-        obj.warp = decodeColorsValue(data)
+        obj.warp = decodeString(data)
         break
       case 'WEFT':
-        obj.weft = decodeColorsValue(data)
+        obj.weft = decodeString(data)
         break
       case 'TIE-UP': {
         obj.tieUp = data.split(';')

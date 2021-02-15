@@ -1,6 +1,6 @@
 import { watchFunction } from './horseless.0.5.1.min.esm.js' // '/unpkg/horseless/horseless.js'
 import { createProgram, createShader } from './webglHelpers.js'
-import { model, saveModel, expandColors } from './model.js'
+import { model, saveModel, expandValue } from './model.js'
 
 const canvas = document.querySelector('canvas')
 const gl = canvas.getContext('webgl')
@@ -130,8 +130,8 @@ function resizeCanvas () {
     }
     return colorMap[hex]
   }
-  const warp = expandColors(model.warp).map(hexMapper)
-  const weft = expandColors(model.weft).map(hexMapper)
+  const warp = expandValue(model.warp, model.colors).map(hexMapper)
+  const weft = expandValue(model.weft, model.colors).map(hexMapper)
 
   gl.uniform3fv(colorsLocation, colorValues.flat())
   gl.uniform1iv(warpLocation, warp)
