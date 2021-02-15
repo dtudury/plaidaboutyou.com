@@ -11,11 +11,14 @@ export const model = window.model = proxy({
     R: decodeString('0x773300'),
     B: decodeString('0x331100'),
     W: decodeString('0xffddaa'),
-    GLEN: decodeString('[[B*8,W*8]*4,[B*4,R*4]*8]'),
-    POINTADV: decodeString('[1,2,3,4,3,2,1]+1*4')
+    GLEN: decodeString('[[B*4,W*8,B*4]*4,[B*2,R*4,B*2]*8]'),
+    STRAIGHTADV: decodeString('[1,2,3,4]+1*8'),
+    POINTADV: decodeString('[1,2,3,4,3,2,1]+1*8')
   },
   warp: 'GLEN',
-  weft: { value: 'GLEN', count: 1 },
+  weft: 'GLEN',
+  threading: 'STRAIGHTADV',
+  treadling: 'POINTADV',
   tieUp: [
     [1, 1, 1, 1, 0, 0, 0, 0],
     [0, 1, 1, 1, 1, 0, 0, 0],
@@ -30,8 +33,6 @@ export const model = window.model = proxy({
   shafts: 8,
   scale: 3
 })
-
-console.log(expandValue(model.vars.POINTADV))
 
 export function expandValue (inValue, dictionary, offset = 0, direction = 1, offsetMap = new Map(), indent = '') {
   // console.log(indent, 'expanding', JSON.stringify(inValue), typeof inValue)
@@ -82,6 +83,8 @@ function encodeModel (model) {
   const varsPart = `VARS=${Object.entries(model.vars).map(([name, value]) => `${name}:${encodeValue(value)}`).join(';')}`
   const warpPart = `WARP=${encodeValue(model.warp)}`
   const weftPart = `WEFT=${encodeValue(model.weft)}`
+  const threadingPart = `THREADING=${encodeValue(model.threading)}`
+  const treadlingPart = `TREADLING=${encodeValue(model.treadling)}`
   const shafts = model.tieUp.reduce((acc, row) => Math.max(acc, row.length), 0)
   const tieUpPart = `TIE-UP=${
     model.tieUp
@@ -89,7 +92,7 @@ function encodeModel (model) {
       .map(row => `0b${BigInt(`0b${row.join('')}`).toString(2)
   }`).join(';')}`
   const constantsPart = `CONSTANTS=${['treadles', 'shafts', 'scale'].map(key => `${key}:${model[key]}`).join(';')}`
-  return [varsPart, warpPart, weftPart, tieUpPart, constantsPart].join('___')
+  return [varsPart, warpPart, weftPart, threadingPart, treadlingPart, tieUpPart, constantsPart].join('___')
 }
 
 export function decodeString (string) {
@@ -169,10 +172,10 @@ function decodeModel (string) {
           }))
         break
       case 'WARP':
-        obj.warp = decodeString(data)
-        break
       case 'WEFT':
-        obj.weft = decodeString(data)
+      case 'THREADING':
+      case 'TREADLING':
+        obj[label.toLowerCase()] = decodeString(data)
         break
       case 'TIE-UP': {
         obj.tieUp = data.split(';')

@@ -19,6 +19,10 @@ const program = createProgram(
     uniform float warpLength;
     uniform int weft[128];
     uniform float weftLength;
+    uniform int threading[128];
+    uniform float threadingLength;
+    uniform int treadling[128];
+    uniform float treadlingLength;
     uniform int tieUp[64];
     uniform float treadles;
     uniform float shafts;
@@ -92,6 +96,10 @@ const warpLocation = gl.getUniformLocation(program, 'warp')
 const warpLengthLocation = gl.getUniformLocation(program, 'warpLength')
 const weftLocation = gl.getUniformLocation(program, 'weft')
 const weftLengthLocation = gl.getUniformLocation(program, 'weftLength')
+const threadingLocation = gl.getUniformLocation(program, 'threading')
+const threadingLengthLocation = gl.getUniformLocation(program, 'threadingLength')
+const treadlingLocation = gl.getUniformLocation(program, 'treadling')
+const treadlingLengthLocation = gl.getUniformLocation(program, 'treadlingLength')
 
 function resizeCanvas () {
   canvas.width = window.innerWidth
@@ -131,18 +139,32 @@ function resizeCanvas () {
     }
     return colorMap[hex]
   }
+  const shafts = model.shafts
+  const treadles = model.treadles
+  const wrap = (i, m) => ((i - 1) % m + m) % m
+  const shaftMapper = i => wrap(i, shafts)
+  const treadleMapper = i => wrap(i, treadles)
   const warp = expandValue(model.warp, model.vars).map(hexMapper)
   const weft = expandValue(model.weft, model.vars).map(hexMapper)
+  const threading = expandValue(model.threading, model.vars).map(shaftMapper)
+  const treadling = expandValue(model.treadling, model.vars).map(treadleMapper)
+
+  console.log(threading)
+  console.log(treadling)
 
   gl.uniform3fv(colorsLocation, colorValues.flat())
   gl.uniform1iv(warpLocation, warp)
   gl.uniform1f(warpLengthLocation, warp.length)
   gl.uniform1iv(weftLocation, weft)
   gl.uniform1f(weftLengthLocation, weft.length)
+  gl.uniform1iv(threadingLocation, threading)
+  gl.uniform1f(threadingLengthLocation, threading.length)
+  gl.uniform1iv(treadlingLocation, treadling)
+  gl.uniform1f(treadlingLengthLocation, treadling.length)
 
   gl.uniform1iv(tieUpLocation, model.tieUp.map(row => row.concat(Array(model.shafts - row.length).fill(0))).flat())
-  gl.uniform1f(treadlesLocation, model.treadles)
-  gl.uniform1f(shaftsLocation, model.shafts)
+  gl.uniform1f(treadlesLocation, treadles)
+  gl.uniform1f(shaftsLocation, shafts)
   saveModel()
 
   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 4)
