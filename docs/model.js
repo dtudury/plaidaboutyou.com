@@ -197,7 +197,7 @@ function decodeModel (string) {
 function setFromHash () {
   if (document.location.hash) {
     try {
-      const hash = decodeModel(document.location.hash.substring(1))
+      const hash = decodeModel(unescape(document.location.hash.substring(1)))
       Object.assign(model, hash)
     } catch (err) {
       console.error(err)
