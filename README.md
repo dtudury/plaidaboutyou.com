@@ -23,8 +23,7 @@ The tie-up is a comma separated list of binary numbers. The leftmost digit of th
 
 ## a whole URL
 
-[A Burberry-like plaid](https://plaidaboutyou.com/#VARS=A:0x000000;B:0xffffff;C:0xaa7733;D:0xdd0000;S:[A*3,B*6,A*6,C*21,D];P:[S,-S]___WARP=P___WEFT=P___THREADING=[1,2,3,4]___TREADLING=[1,2,3,4]___TIE-UP=0b1100;0b110;0b11;0b1001___CONSTANTS=treadles:4;shafts:4;scale:3)
-`https://plaidaboutyou.com/#VARS=A:0x000000;B:0xffffff;C:0xaa7733;D:0xdd0000;S:[A*3,B*6,A*6,C*21,D];P:[S,-S]___WARP=P___WEFT=P___THREADING=[1,2,3,4]___TREADLING=[1,2,3,4]___TIE-UP=0b1100;0b110;0b11;0b1001___CONSTANTS=treadles:4;shafts:4;scale:3`
+A Burberry-like plaid: <https://plaidaboutyou.com/#VARS=A:0x000000;B:0xffffff;C:0xaa7733;D:0xdd0000;S:[A*3,B*6,A*6,C*21,D];P:[S,-S]___WARP=P___WEFT=P___THREADING=[1,2,3,4]___TREADLING=[1,2,3,4]___TIE-UP=0b1100;0b110;0b11;0b1001___CONSTANTS=treadles:4;shafts:4;scale:3>
 
 * `https://plaidaboutyou.com/#`
 * `VARS=`
