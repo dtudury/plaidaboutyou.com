@@ -7,6 +7,7 @@ export function saveModel () {
 }
 
 export const model = window.model = proxy({
+  dimensions: { width: 0, height: 0 },
   vars: {
     R: decodeString('0x773300'),
     B: decodeString('0x331100'),
