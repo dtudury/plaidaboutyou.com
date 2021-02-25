@@ -1,4 +1,4 @@
-import { proxy } from './horseless.0.5.1.min.esm.js' // '/unpkg/horseless/horseless.js'
+import { proxy } from './horseless.0.5.2.min.esm.js' // '/unpkg/horseless/horseless.js'
 
 export const unproxy = p => JSON.parse(JSON.stringify(p))
 
