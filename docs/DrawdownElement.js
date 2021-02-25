@@ -6,9 +6,17 @@ class DrawdownElement extends window.HTMLCanvasElement {
   connectedCallback () {
     const gl = this.getContext('webgl')
     if (!gl) { console.error('no webgl?!') }
-
     const drawdown = new Drawdown(gl)
-    function plaidRenderer () {
+
+    watchFunction(() => {
+      this.width = model.dimensions.width
+      this.height = model.dimensions.height
+      drawdown.setDimensions(model.dimensions)
+      drawdown.setScale(model.scale)
+      drawdown.draw()
+    })
+
+    watchFunction(() => {
       const colorValues = []
       const colorMap = {}
       const hexMapper = hex => {
@@ -32,22 +40,18 @@ class DrawdownElement extends window.HTMLCanvasElement {
       drawdown.setThreading(expandValue(model.threading, model.vars).map(shaftMapper))
       drawdown.setTreadling(expandValue(model.treadling, model.vars).map(treadleMapper))
 
-      drawdown.setDimensions(model.dimensions)
-      drawdown.setScale(model.scale)
       drawdown.setTieUp(model.tieUp.map(arr => arr.slice().reverse()).flat())
       drawdown.setTreadles(model.treadles)
       drawdown.setShafts(model.shafts)
       drawdown.draw()
-    }
-
-    watchFunction(() => {
-      this.width = model.dimensions.width
-      this.height = model.dimensions.height
-      plaidRenderer()
     })
   }
 }
 
 const drawdownElementName = 'drawdown-element'
 window.customElements.define(drawdownElementName, DrawdownElement, { extends: 'canvas' })
-export const DRAWDOWN_ELEMENT = () => h`<canvas is="${drawdownElementName}"/>`
+const drawdowns = new Map()
+export const DRAWDOWN_ELEMENT = (attributes, children, description) => {
+  if (!drawdowns.has(description)) drawdowns.set(description, h`<canvas is="${drawdownElementName}"/>`)
+  return drawdowns.get(description)
+}

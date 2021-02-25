@@ -10,5 +10,5 @@ window.addEventListener('resize', updateDimensions, false)
 watchFunction(saveModel)
 
 render(document.body, h`
-  <${DRAWDOWN_ELEMENT}/>
+  <${DRAWDOWN_ELEMENT} dimensions=${() => ({ dimensions: model.dimensions })}/>
 `)
