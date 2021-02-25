@@ -1,4 +1,4 @@
-import { h, mapEntries, render } from './horseless.0.5.1.min.esm.js' // '/unpkg/horseless/horseless.js'
+import { h, mapEntries, render } from './horseless.0.5.2.min.esm.js' // '/unpkg/horseless/horseless.js'
 import { decodeString, encodeValue, expandValue } from './model.js'
 
 function testDecoding (inputString, expected) {

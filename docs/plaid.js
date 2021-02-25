@@ -1,75 +1,9 @@
-import { createProgram, createShader } from './webglHelpers.js'
 import { model, expandValue } from './model.js'
+import { Drawdown } from './Drawdown.js'
 
 export function createPlaidRenderer (canvas, gl) {
-  const program = createProgram(
-    gl,
-    createShader(gl, gl.VERTEX_SHADER, `
-    precision mediump float;
-    uniform vec2 resolution;
-    uniform vec2 scale;
-    uniform vec3 colors[16];
-    uniform int warp[128];
-    uniform float warpLength;
-    uniform int weft[128];
-    uniform float weftLength;
-    uniform int threading[128];
-    uniform float threadingLength;
-    uniform int treadling[128];
-    uniform float treadlingLength;
-    uniform int tieUp[64];
-    uniform float treadles;
-    uniform float shafts;
-    attribute vec4 vertPosition;
-    varying vec4 fragColor;
-
-    bool isWarp (float x, float y) {
-      int treadle = treadling[int(mod(y + 0.5, treadlingLength))];
-      int shaft = threading[int(mod(x + 0.5, threadingLength))];
-      int a = tieUp[treadle * int(0.5 + shafts) + shaft];
-      return a == 1;
-    }
-
-    void main() {
-      float width = floor(0.5 + warpLength);
-      float height = floor(0.5 + weftLength);
-      float x = floor(0.5 + vertPosition.x);
-      float y = floor(0.5 + vertPosition.y);
-      float ox = floor(0.5 + vertPosition.z);
-      float oy = floor(0.5 + vertPosition.w);
-      float texture = 0.3;
-      if (isWarp(x, y)) {
-        int warpIndex = int(mod(x + 0.5, width));
-        if (ox == 1.0) {
-          fragColor = vec4((1.0 - texture) * colors[warp[warpIndex]], 1.0);
-        } else {
-          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[warp[warpIndex]], 1.0);
-        }
-      } else {
-        int weftIndex = int(mod(y + 0.5, height));
-        if (oy == 1.0) {
-          fragColor = vec4((1.0 - texture) * colors[weft[weftIndex]], 1.0);
-        } else {
-          fragColor = vec4(texture * vec3(1.0, 1.0, 1.0) + (1.0 - texture) * colors[weft[weftIndex]], 1.0);
-        }
-      }
-      gl_Position = vec4(
-        2.0 * (x + ox) * scale.x / resolution.x - 1.0,
-        -2.0 * (y + oy) * scale.y / resolution.y + 1.0,
-        0.0,
-        1.0
-      );
-    }
-  `),
-    createShader(gl, gl.FRAGMENT_SHADER, `
-    precision mediump float;
-    varying vec4 fragColor;
-
-    void main() {
-      gl_FragColor = fragColor;
-    }
-  `)
-  )
+  const drawdown = new Drawdown(gl)
+  const program = drawdown.program
 
   const triangleVertexBufferObject = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexBufferObject)
@@ -77,23 +11,7 @@ export function createPlaidRenderer (canvas, gl) {
   gl.vertexAttribPointer(positionAttribLocation, 4, gl.FLOAT, gl.FALSE, 4 * Float32Array.BYTES_PER_ELEMENT, 0)
   gl.enableVertexAttribArray(positionAttribLocation)
 
-  const resolutionLocation = gl.getUniformLocation(program, 'resolution')
-  const scaleLocation = gl.getUniformLocation(program, 'scale')
-  const tieUpLocation = gl.getUniformLocation(program, 'tieUp')
-  const treadlesLocation = gl.getUniformLocation(program, 'treadles')
-  const shaftsLocation = gl.getUniformLocation(program, 'shafts')
-  const colorsLocation = gl.getUniformLocation(program, 'colors')
-  const warpLocation = gl.getUniformLocation(program, 'warp')
-  const warpLengthLocation = gl.getUniformLocation(program, 'warpLength')
-  const weftLocation = gl.getUniformLocation(program, 'weft')
-  const weftLengthLocation = gl.getUniformLocation(program, 'weftLength')
-  const threadingLocation = gl.getUniformLocation(program, 'threading')
-  const threadingLengthLocation = gl.getUniformLocation(program, 'threadingLength')
-  const treadlingLocation = gl.getUniformLocation(program, 'treadling')
-  const treadlingLengthLocation = gl.getUniformLocation(program, 'treadlingLength')
-
   return function plaidRenderer () {
-    gl.useProgram(program)
     const step = model.scale
     const xStep = step
     const yStep = step
@@ -110,10 +28,6 @@ export function createPlaidRenderer (canvas, gl) {
         )
       }
     }
-    gl.viewport(0, 0, window.innerWidth, window.innerHeight)
-    gl.uniform2f(resolutionLocation, model.dimensions.width, model.dimensions.height)
-    gl.uniform2f(scaleLocation, xStep, yStep)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
 
     const colorValues = []
     const colorMap = {}
@@ -138,19 +52,23 @@ export function createPlaidRenderer (canvas, gl) {
     const threading = expandValue(model.threading, model.vars).map(shaftMapper)
     const treadling = expandValue(model.treadling, model.vars).map(treadleMapper)
 
-    gl.uniform3fv(colorsLocation, colorValues.flat())
-    gl.uniform1iv(warpLocation, warp)
-    gl.uniform1f(warpLengthLocation, warp.length)
-    gl.uniform1iv(weftLocation, weft)
-    gl.uniform1f(weftLengthLocation, weft.length)
-    gl.uniform1iv(threadingLocation, threading)
-    gl.uniform1f(threadingLengthLocation, threading.length)
-    gl.uniform1iv(treadlingLocation, treadling)
-    gl.uniform1f(treadlingLengthLocation, treadling.length)
-
-    gl.uniform1iv(tieUpLocation, model.tieUp.map(arr => arr.slice().reverse()).flat())
-    gl.uniform1f(treadlesLocation, treadles)
-    gl.uniform1f(shaftsLocation, shafts)
+    gl.useProgram(program)
+    gl.viewport(0, 0, model.dimensions.width, model.dimensions.height)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
+    gl.uniform2f(drawdown.resolutionLocation, model.dimensions.width, model.dimensions.height)
+    gl.uniform2f(drawdown.scaleLocation, xStep, yStep)
+    gl.uniform3fv(drawdown.colorsLocation, colorValues.flat())
+    gl.uniform1iv(drawdown.warpLocation, warp)
+    gl.uniform1f(drawdown.warpLengthLocation, warp.length)
+    gl.uniform1iv(drawdown.weftLocation, weft)
+    gl.uniform1f(drawdown.weftLengthLocation, weft.length)
+    gl.uniform1iv(drawdown.threadingLocation, threading)
+    gl.uniform1f(drawdown.threadingLengthLocation, threading.length)
+    gl.uniform1iv(drawdown.treadlingLocation, treadling)
+    gl.uniform1f(drawdown.treadlingLengthLocation, treadling.length)
+    gl.uniform1iv(drawdown.tieUpLocation, model.tieUp.map(arr => arr.slice().reverse()).flat())
+    gl.uniform1f(drawdown.treadlesLocation, treadles)
+    gl.uniform1f(drawdown.shaftsLocation, shafts)
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 4)
   }
 }
