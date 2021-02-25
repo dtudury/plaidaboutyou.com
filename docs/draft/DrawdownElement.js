@@ -1,6 +1,6 @@
-import { h, watchFunction } from './horseless.0.5.2.min.esm.js' // '/unpkg/horseless/horseless.js'
+import { h, watchFunction } from '../horseless.0.5.2.min.esm.js' // '/unpkg/horseless/horseless.js'
 import { Drawdown } from './Drawdown.js'
-import { model, expandValue } from './model.js'
+import { model, expandValue } from '../model.js'
 
 class DrawdownElement extends window.HTMLCanvasElement {
   connectedCallback () {

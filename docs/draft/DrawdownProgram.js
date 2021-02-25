@@ -1,4 +1,4 @@
-import { createProgram, createShader } from './webglHelpers.js'
+import { createProgram, createShader } from '../webglHelpers.js'
 
 export function createDrawdownProgram (gl) {
   return createProgram(

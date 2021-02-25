@@ -63,7 +63,8 @@ export function expandValue (inValue, dictionary, offset = 0, direction = 1, off
     outValue = outValue.flat()
   } else if (typeof inValue === 'number') outValue = inValue + offset
   else if (typeof inValue === 'string' && inValue.startsWith('0x')) outValue = [inValue]
-  else outValue = expandValue(dictionary[inValue], dictionary, offset, direction, offsetMap, indent + '  ')
+  else if (dictionary[inValue]) outValue = expandValue(dictionary[inValue], dictionary, offset, direction, offsetMap, indent + '  ')
+  else outValue = expandValue(decodeString(inValue), dictionary, offset, direction, offsetMap, indent + '  ')
   // console.log(indent, 'expanded to', outValue)
   return outValue
 }
@@ -109,7 +110,6 @@ export function decodeString (string) {
       }
     }
     ++i
-    // console.log('read array', JSON.stringify(array), i, string)
     return array
   }
   function readInt () {
@@ -118,7 +118,6 @@ export function decodeString (string) {
       numberPart += string.charAt(i)
       ++i
     }
-    // console.log('read int', numberPart, i, string)
     return parseInt(numberPart)
   }
   function readNode () {
@@ -155,7 +154,6 @@ export function decodeString (string) {
           if (node.value.match(/^[-\d]*$/)) node.value = +node.value
       }
     }
-    // console.log('read node', JSON.stringify(node), i, string)
     return node
   }
 }

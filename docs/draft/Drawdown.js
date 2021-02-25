@@ -27,7 +27,11 @@ export class Drawdown {
     this.treadlingLengthLocation = gl.getUniformLocation(this.program, 'treadlingLength')
   }
 
-  updateVertices () {
+  draw () {
+    this.gl.drawArrays(this.gl.TRIANGLES, 0, this.vertices.length / 4)
+  }
+
+  _updateVertices () {
     if (this._scale && this._dimensions) {
       const step = this._scale
       const xStep = step
@@ -49,21 +53,17 @@ export class Drawdown {
     }
   }
 
-  draw () {
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, this.vertices.length / 4)
-  }
-
   setDimensions (dimensions) {
     this._dimensions = dimensions
     this.gl.viewport(0, 0, dimensions.width, dimensions.height)
     this.gl.uniform2f(this.resolutionLocation, dimensions.width, dimensions.height)
-    this.updateVertices()
+    this._updateVertices()
   }
 
   setScale (scale) {
     this.gl.uniform2f(this.scaleLocation, scale, scale)
     this._scale = scale
-    this.updateVertices()
+    this._updateVertices()
   }
 
   setColors (colors) {
