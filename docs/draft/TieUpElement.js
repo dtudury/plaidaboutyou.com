@@ -11,12 +11,25 @@ class TieUpElement extends window.HTMLCanvasElement {
     watchFunction(() => {
       this.width = model.treadles * model.scale
       this.height = model.shafts * model.scale
-      tieUp.setTieUp(model.tieUp.flat())
       tieUp.setTreadles(model.treadles)
       tieUp.setShafts(model.shafts)
       tieUp.setScale(model.scale)
       tieUp.draw()
     })
+
+    watchFunction(() => {
+      tieUp.setTieUp(model.tieUp.flat())
+      tieUp.draw()
+    })
+
+    this.addEventListener('click', this.onclick)
+  }
+
+  onclick (e) {
+    const x = Math.floor(e.offsetX / model.scale)
+    const y = Math.floor(e.offsetY / model.scale)
+    console.log(x, y)
+    model.tieUp[y][x] = 1 - model.tieUp[y][x]
   }
 }
 

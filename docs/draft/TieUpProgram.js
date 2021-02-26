@@ -13,18 +13,24 @@ export function createTieUpProgram (gl) {
       varying vec4 fragColor;
 
       bool isWarp (float x, float y) {
-        int treadle = int(y + 0.5);
-        int shaft = int(x + 0.5);
-        int a = tieUp[treadle * int(0.5 + shafts) + shaft];
+        int treadle = int(x + 0.5);
+        int shaft = int(y + 0.5);
+        int a = tieUp[shaft * int(0.5 + treadles) + treadle];
         return a == 1;
+      }
+
+      bool isEdge (float ox, float oy) {
+        return ox > 0.99 || ox < 0.01 || oy > 0.99 || oy < 0.01;
       }
 
       void main() {
         float x = floor(0.5 + vertPosition.x);
         float y = floor(0.5 + vertPosition.y);
-        float ox = floor(0.5 + vertPosition.z);
-        float oy = floor(0.5 + vertPosition.w);
-        if (isWarp(x, y)) {
+        float ox = vertPosition.z;
+        float oy = vertPosition.w;
+        if (isEdge(ox, oy)) {
+          fragColor = vec4(0.5, 0.5, 0.5, 1.0);
+        } else if (isWarp(x, y)) {
           fragColor = vec4(1.0, 1.0, 1.0, 1.0);
         } else {
           fragColor = vec4(0.0, 0.0, 0.0, 1.0);

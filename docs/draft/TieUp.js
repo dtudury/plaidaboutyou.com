@@ -22,18 +22,37 @@ export class TieUp {
   }
 
   _updateVertices () {
+    const border = 0.2
+    const TLBR = [[0, 0], [1, 1]]
     if (this._scale && this._shafts && this._treadles) {
       this.gl.viewport(0, 0, this._treadles * this._scale, this._shafts * this._scale)
       this.vertices = []
       for (let x = 0; x < this._treadles; ++x) {
         for (let y = 0; y < this._shafts; ++y) {
+          TLBR.forEach(([x1, y1]) => {
+            const nearCorner = x1 ? [1 - border, 1 - border] : [0 + border, 0 + border]
+            const diagonals = [
+              [1, 0],
+              [1 - border, 0 + border],
+              nearCorner,
+              [0 + border, 1 - border],
+              [0, 1]
+            ]
+            for (let i = 1; i < diagonals.length; ++i) {
+              this.vertices.push(
+                x, y, x1, y1,
+                x, y, ...diagonals[i - 1],
+                x, y, ...diagonals[i]
+              )
+            }
+          })
           this.vertices.push(
-            x, y, 0, 0,
-            x, y, 0, 1,
-            x, y, 1, 0,
-            x, y, 1, 1,
-            x, y, 1, 0,
-            x, y, 0, 1
+            x, y, 0 + border, 0 + border,
+            x, y, 0 + border, 1 - border,
+            x, y, 1 - border, 0 + border,
+            x, y, 1 - border, 1 - border,
+            x, y, 1 - border, 0 + border,
+            x, y, 0 + border, 1 - border
           )
         }
       }

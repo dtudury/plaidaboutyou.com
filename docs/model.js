@@ -189,7 +189,17 @@ function decodeModel (string) {
         break
     }
   })
-  obj.tieUp = obj.tieUp.map(row => Array(obj.treadles - row.length).fill(0).concat(row))
+  if (obj.shafts > obj.tieUp.length) {
+    obj.tieUp = obj.tieUp.concat(Array(obj.shafts - obj.tieUp.length).fill([]))
+  }
+  obj.tieUp = obj.tieUp.slice(-obj.shafts)
+  obj.tieUp = obj.tieUp.map(row => {
+    if (obj.treadles > row.length) {
+      row = Array(obj.treadles - row.length).fill(0).concat(row)
+    }
+    row = row.slice(-obj.treadles)
+    return row
+  })
   return obj
 }
 
